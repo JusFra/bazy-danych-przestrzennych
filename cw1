@@ -46,7 +46,7 @@ INSERT INTO poi (id, geometry, name)
 SELECT * FROM poi
 
 -- 6a.	Wyznacz całkowitą długość dróg w analizowanym mieście.  
-SELECT name, ST_Length(geometry) AS  roadLenght
+SELECT SUM(ST_Length(geometry)) AS  roadLenght
 FROM roads;
 
  -- 6b. b.	Wypisz geometrię (WKT), pole powierzchni oraz obwód poligonu reprezentującego budynek o nazwie BuildingA. 
@@ -57,6 +57,7 @@ WHERE name = 'BuildingA';
 -- 6c.	Wypisz nazwy i pola powierzchni wszystkich poligonów w warstwie budynki. Wyniki posortuj alfabetycznie.
 SELECT name, ST_Area(geometry) AS area 
 FROM buildings
+ORDER BY name
 
 -- 6d.	Wypisz nazwy i obwody 2 budynków o największej powierzchni.  
 SELECT name, ST_Perimeter(geometry) AS perimeter
@@ -69,19 +70,10 @@ SELECT ST_Distance(buildings.geometry, poi.geometry) AS distance
 FROM buildings, poi
 WHERE buildings.name = 'BuildingC' AND poi.name = 'G';
 
--- 6f.	Wypisz pole powierzchni tej części budynku BuildingC, która znajduje się w odległości większej niż 0.5 od budynku BuildingB.
-SELECT ST_AREA(geometry) AS area
-FROM buildings b
-WHERE name = 'BuildingB' AND geometry > (SELECT ST_Buffer(geometry, 0.5)
-										FROM buildings
-										WHERE name = 'BuildingC')  
-										
-SELECT ST_Area(ST_Difference(geometry, (SELECT ST_Buffer(geometry, 0.5)
-										FROM buildings
-										WHERE name = 'Building B')))										
-FROM buildings
-WHERE name = 'BuildingC'
-
+-- 6f.	Wypisz pole powierzchni tej części budynku BuildingC, która znajduje się w odległości większej niż 0.5 od budynku BuildingB.									
+SELECT ST_Area(ST_Difference((SELECT b.geometry FROM buildings b WHERE b.name = 'BuildingC'), 
+			   ST_Buffer((SELECT b.geometry FROM buildings b WHERE b.name = 'BuildingB'), 0.5))) AS area;
+	
 -- 6g.	Wybierz te budynki, których centroid (ST_Centroid) znajduje się powyżej drogi o nazwie RoadX.  
 SELECT name
 FROM buildings
