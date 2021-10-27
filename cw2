@@ -1,0 +1,67 @@
+CREATE EXTENSION postgis;
+
+-- 4. Wyznacz liczbę budynków (tabela: popp, atrybut: f_codedesc, reprezentowane, jako punkty) 
+--    położonych w odległości mniejszej niż 1000 m od głównych rzek. Budynki spełniające to kryterium zapisz do osobnej tabeli tableB.
+
+SELECT p.f_codedesc, COUNT(*)
+FROM popp p, majrivers m
+WHERE p.f_codedesc = 'Building' AND ST_Contains(ST_BUFFER(m.geom, 1000), p.geom)  
+GROUP BY p.f_codedesc
+
+
+-- 5. Utwórz tabelę o nazwie airportsNew. Z tabeli airports do zaimportuj nazwy lotnisk, ich geometrię, a także atrybut elev, 
+--    preprezentujący wysokość n.p.m.
+
+CREATE TABLE airportsNew AS (SELECT name, geom, elev FROM airports);
+
+-- a) Znajdź lotnisko, które położone jest najbardziej na zachód i najbardziej na wschód.
+-- wschód
+SELECT name, ST_X(geom)
+FROM airportsNew
+ORDER BY ST_X(geom)
+LIMIT 1
+
+-- zachód
+SELECT name, ST_X(geom)
+FROM airportsNew
+ORDER BY ST_X(geom) DESC
+LIMIT 1
+
+-- b) Do tabeli airportsNew dodaj nowy obiekt - lotnisko, które położone jest w punkcie środkowym drogi pomiędzy lotniskami 
+--    znalezionymi w punkcie a. Lotnisko nazwij airportB. Wysokość n.p.m. przyjmij dowolną.
+
+INSERT INTO airportsNew(name, geom, elev)
+VALUES ('airportB', 
+	   (SELECT ST_Centroid(ST_MakeLine((SELECT geom FROM airportsNew ORDER BY ST_X(geom) LIMIT 1), 
+							   (SELECT geom FROM airportsNew ORDER BY ST_X(geom) DESC LIMIT 1)))),
+		21
+	   );
+	   
+SELECT *
+FROM airportsNew
+WHERE name = 'airportB' OR name = 'ANNETTE ISLAND' OR name = 'ATKA'
+
+-- Uwaga: geodezyjny układ współrzędnych prostokątnych płaskich (x – oś pionowa, y – oś pozioma)
+
+-- 6. Wyznacz pole powierzchni obszaru, który oddalony jest mniej niż 1000 jednostek od najkrótszej 
+-- linii łączącej jezioro o nazwie ‘Iliamna Lake’ i lotnisko o nazwie „AMBLER”
+
+SELECT ST_Area(ST_Buffer((ST_ShortestLine((SELECT geom FROM lakes WHERE names = 'Iliamna Lake'), 
+							 			(SELECT geom FROM airports WHERE name = 'AMBLER'))), 1000.00)) AS Area
+
+-- 7. Napisz zapytanie, które zwróci sumaryczne pole powierzchni poligonów reprezentujących poszczególne 
+--    typy drzew znajdujących się na obszarze tundry i bagien (swamps).
+
+-- tundra
+SELECT t.vegdesc, SUM(t.area_km2) AS Area
+FROM trees t, tundra tu
+WHERE t.geom = tu.geom
+GROUP BY t.vegdesc
+
+-- bagna
+SELECT t.vegdesc, SUM(t.area_km2) AS Area
+FROM trees t, swamp s
+WHERE t.geom = s.geom
+GROUP BY t.vegdesc
+
+
