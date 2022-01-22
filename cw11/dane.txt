@@ -1,0 +1,2 @@
+email,password,email2,powiat,cloud,data_start,data_stop
+justyna.test987@gmail.com,password,justyna.test987@gmail.com,powiat rzeszowski,20,20211201,20220122
