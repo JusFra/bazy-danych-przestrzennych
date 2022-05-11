@@ -14,7 +14,7 @@ Exercise 5: Working with collections of geometry and EWKT.
 
 Exercises 6-7: PostGIS Raster.
 
-Exercise 8-9: Automation of spatial data processing. Script written in PowerShell.
+Exercises 8-9: Automation of spatial data processing. Script written in PowerShell.
 
 Exercise 10: Working in the FME environment.
 
